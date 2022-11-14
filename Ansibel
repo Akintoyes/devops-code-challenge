@@ -1,0 +1,56 @@
+#java.yml
+
+---
+
+  - name: update APT package manager repositories cache
+    become: true
+    apt:
+      update_cache: yes
+
+  - name: install OpenJDK Java
+    become: yes
+    apt:
+      name: "{{ item }}"
+      state: present
+      name: openjdk-11-jdk
+      
+
+#jenkisn.yml
+
+--- 
+- hosts: all
+
+  tasks:
+  - include_tasks: java.yml
+
+  - name: ensure jenkins apt repository key is installed
+    apt_key: url=https://pkg.jenkins.io/debian-stable/jenkins.io.key state=present
+    become: yes
+
+  - name: ensure respository is configured
+    apt_repository: repo='deb https://pkg.jenkins.io/debian-stable binary/' state=present
+    become: yes
+
+  - name: ensure jenkins is installed
+    apt: name=jenkins update_cache=yes
+    become: yes
+
+  - name: ensure jenkins is running 
+    service: name=jenkins state=started  
+  
+ #docker.yml
+ 
+ - hosts: all
+  become: true
+
+  tasks:
+    - name: ensure repository key is installed
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: ensure docker registry is available
+      apt_repository: repo='deb https://download.docker.com/linux/ubuntu bionic stable' state=present
+
+    - name: ensure docker and dependencies are installed
+      apt: name=docker-ce update_cache=yes
